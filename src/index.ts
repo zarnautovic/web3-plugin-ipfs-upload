@@ -27,7 +27,7 @@ export class IpfsPlugin extends Web3PluginBase {
     const bytes = this.readFileAsBytes(filePath);
     const cid = await unixFs.addBytes(bytes);
 
-    this._contract.setProvider(this._web3.currentProvider);
+    // this._contract.setProvider(this._web3.currentProvider);
 
     const privateKey =
       "2f579a3d3f74f27c1667687ba090586bc717a6afb45700ccb96dab3e8143a3bf";
