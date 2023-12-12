@@ -8,12 +8,7 @@ export const IPFSContractAbi = [
         name: "owner",
         type: "address",
       },
-      {
-        indexed: true,
-        internalType: "string",
-        name: "cid",
-        type: "string",
-      },
+      { indexed: true, internalType: "string", name: "cid", type: "string" },
     ],
     name: "CIDStored",
     type: "event",

@@ -9,69 +9,97 @@ export class IpfsPlugin extends Web3PluginBase {
 
   private readonly _contract: Contract<typeof IPFSContractAbi>;
   private readonly _web3: any;
+  private readonly _account: any;
 
-  public constructor(abi: ContractAbi, address: types.Address, web3: any) {
+  public constructor(
+    abi: ContractAbi,
+    address: types.Address,
+    web3: any,
+    privateKey: string
+  ) {
     super();
-    this._contract = new Contract(abi, address, web3);
+    web3.eth.accounts.privateKeyToAccount("0x" + privateKey);
+    this._account = web3.eth.accounts.wallet.add("0x" + privateKey).get(0)!;
+    this._contract = new web3.eth.Contract(abi, address, web3);
     this._web3 = web3;
   }
 
-  public test(param: string): void {
-    console.log(param);
+  public async uploadFile(filePath: string): Promise<void> {
+    try {
+      const helia = await createHelia();
+      const unixFs = unixfs(helia);
+
+      const bytes = this.readFileAsBytes(filePath);
+      const cid = await unixFs.addBytes(bytes);
+
+      this._contract.setProvider(this._web3.currentProvider);
+
+      const tx = this._contract.methods.store(cid.toString());
+      const estimated = await tx.estimateGas();
+
+      //   const encoded = tx.encodeABI();
+      // var block = await this._web3.eth.getBlock("latest");
+
+      console.log(estimated);
+      console.log(this._web3.eth.defaultAccount);
+
+      console.log(await this._web3.eth.getAccounts());
+
+      const blockNumber = await this._web3.eth.getBlockNumber();
+      console.log("Latest block number:", blockNumber);
+
+      //   const tx = {
+      //     data: encoded,
+      //     from: this._web3.eth.defaultAccount,
+      //     gasPrice: "40000000",
+      //     maxFeePerGas: "4620857334",
+      //   };
+
+      const receipt = await this._contract.methods.store("bla").send({
+        from: this._account.address,
+      });
+
+      console.log(receipt);
+
+      //   const privateKey =
+      //     "2f579a3d3f74f27c1667687ba090586bc717a6afb45700ccb96dab3e8143a3bf";
+      //   const signed = await this._web3.eth.accounts.signTransaction(
+      //     tx,
+      //     privateKey
+      //   );
+
+      //   let receipt = await this._web3.eth.sendSignedTransaction(
+      //     signed.rawTransaction
+      //   );
+
+      //   console.log(receipt);
+
+      //   this._web3.eth
+      //     .sendTransaction({
+      //       to: this._web3.eth.defaultAccount,
+      //       value: "0x1",
+      //       from: this._web3.eth.defaultAccount,
+      //     })
+      //     .on("receipt", console.log)
+      //     .on("error", console.log)
+      //     .on("transactionHash", console.log);
+    } catch (error: any) {
+      console.log(error);
+      console.log("======================================");
+      console.log(error.request.params);
+    }
   }
 
-  public async uploadFile(filePath: string): Promise<void> {
-    const helia = await createHelia();
-    const unixFs = unixfs(helia);
+  public async getEvents(): Promise<void> {
+    try {
+      this._contract.setProvider(this._web3.currentProvider);
 
-    const bytes = this.readFileAsBytes(filePath);
-    const cid = await unixFs.addBytes(bytes);
+      const events = await this._contract.events.CIDStored();
 
-    // this._contract.setProvider(this._web3.currentProvider);
-
-    const privateKey =
-      "2f579a3d3f74f27c1667687ba090586bc717a6afb45700ccb96dab3e8143a3bf";
-    const privateKeyBuffer = Buffer.from(privateKey, "hex");
-
-    var account = this._web3.eth.accounts.privateKeyToAccount(privateKeyBuffer);
-    this._web3.eth.accounts.wallet.add(account);
-    this._web3.eth.defaultAccount = account.address;
-    var accountFrom = account.address;
-
-    const tx = this._contract.methods.store(cid.toString());
-    const estimated = await tx.estimateGas();
-
-    // const encoded = this._contract.methods.store(cid.toString()).encodeABI();
-    // var block = await this._web3.eth.getBlock("latest");
-
-    // var tx = {
-    //   data: encoded,
-    //   from: accountFrom,
-    //   gasPrice: "200000000000",
-    // };
-
-    const receipt = await tx.send({
-      // used first account from your wallet.
-      from: accountFrom,
-      gas: estimated.toString(),
-    });
-
-    console.log(receipt);
-
-    // const signed = await this._web3.eth.accounts.signTransaction(
-    //   tx,
-    //   privateKey
-    // );
-
-    // console.log(signed);
-
-    // let receipt = await this._web3.eth.sendSignedTransaction(
-    //   signed.rawTransaction
-    // );
-
-    // console.log(receipt);
-
-    console.log(cid.toString());
+      console.log(events);
+    } catch (error) {
+      console.log(error);
+    }
   }
 
   private readFileAsBytes(filePath: string): Uint8Array {
