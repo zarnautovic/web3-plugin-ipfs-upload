@@ -1,27 +1,25 @@
 import * as fs from "fs";
-import { Contract, ContractAbi, Web3PluginBase, types } from "web3";
+import { Contract, Web3Context, Web3PluginBase } from "web3";
 import { createHelia } from "helia";
 import { unixfs } from "@helia/unixfs";
-import { IPFSContractAbi } from "./ContractAbi";
+import { IPFSContractAbi } from "../lib/ContractAbi.js";
 
 export class IpfsPlugin extends Web3PluginBase {
   public pluginNamespace = "ipfs";
 
   private readonly _contract: Contract<typeof IPFSContractAbi>;
-  private readonly _web3: any;
-  private readonly _account: any;
 
-  public constructor(
-    abi: ContractAbi,
-    address: types.Address,
-    web3: any,
-    privateKey: string
-  ) {
+  public constructor() {
     super();
-    web3.eth.accounts.privateKeyToAccount("0x" + privateKey);
-    this._account = web3.eth.accounts.wallet.add("0x" + privateKey).get(0)!;
-    this._contract = new web3.eth.Contract(abi, address, web3);
-    this._web3 = web3;
+    this._contract = new Contract(
+      IPFSContractAbi,
+      "0x7af963cF6D228E564e2A0aA0DdBF06210B38615D"
+    );
+  }
+
+  public link(parentContext: Web3Context) {
+    super.link(parentContext);
+    this._contract.link(parentContext);
   }
 
   public async uploadFile(filePath: string): Promise<void> {
@@ -32,57 +30,10 @@ export class IpfsPlugin extends Web3PluginBase {
       const bytes = this.readFileAsBytes(filePath);
       const cid = await unixFs.addBytes(bytes);
 
-      this._contract.setProvider(this._web3.currentProvider);
-
-      const tx = this._contract.methods.store(cid.toString());
-      const estimated = await tx.estimateGas();
-
-      //   const encoded = tx.encodeABI();
-      // var block = await this._web3.eth.getBlock("latest");
-
-      console.log(estimated);
-      console.log(this._web3.eth.defaultAccount);
-
-      console.log(await this._web3.eth.getAccounts());
-
-      const blockNumber = await this._web3.eth.getBlockNumber();
-      console.log("Latest block number:", blockNumber);
-
-      //   const tx = {
-      //     data: encoded,
-      //     from: this._web3.eth.defaultAccount,
-      //     gasPrice: "40000000",
-      //     maxFeePerGas: "4620857334",
-      //   };
-
-      const receipt = await this._contract.methods.store("bla").send({
-        from: this._account.address,
-      });
-
-      console.log(receipt);
-
-      //   const privateKey =
-      //     "2f579a3d3f74f27c1667687ba090586bc717a6afb45700ccb96dab3e8143a3bf";
-      //   const signed = await this._web3.eth.accounts.signTransaction(
-      //     tx,
-      //     privateKey
-      //   );
-
-      //   let receipt = await this._web3.eth.sendSignedTransaction(
-      //     signed.rawTransaction
-      //   );
-
-      //   console.log(receipt);
-
-      //   this._web3.eth
-      //     .sendTransaction({
-      //       to: this._web3.eth.defaultAccount,
-      //       value: "0x1",
-      //       from: this._web3.eth.defaultAccount,
-      //     })
-      //     .on("receipt", console.log)
-      //     .on("error", console.log)
-      //     .on("transactionHash", console.log);
+      const tx = await this._contract.methods.store(cid.toString());
+      console.log(
+        await tx.send({ from: "0x303DCE3136490CBf862cb3aBAdeE37018Bc6206c" })
+      );
     } catch (error: any) {
       console.log(error);
       console.log("======================================");
@@ -92,8 +43,6 @@ export class IpfsPlugin extends Web3PluginBase {
 
   public async getEvents(): Promise<void> {
     try {
-      this._contract.setProvider(this._web3.currentProvider);
-
       const events = await this._contract.events.CIDStored();
 
       console.log(events);
