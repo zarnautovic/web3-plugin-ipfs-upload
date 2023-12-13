@@ -2,19 +2,19 @@ import * as fs from "fs";
 import { Contract, Web3Context, Web3PluginBase } from "web3";
 import { createHelia } from "helia";
 import { unixfs } from "@helia/unixfs";
-import { IPFSContractAbi } from "../lib/ContractAbi.js";
+import { IPFSContractAbi } from "./ContractAbi.js";
 
 export class IpfsPlugin extends Web3PluginBase {
   public pluginNamespace = "ipfs";
+
+  private readonly contractAddress: string =
+    "0xA683BF985BC560c5dc99e8F33f3340d1e53736EB";
 
   private readonly _contract: Contract<typeof IPFSContractAbi>;
 
   public constructor() {
     super();
-    this._contract = new Contract(
-      IPFSContractAbi,
-      "0x7af963cF6D228E564e2A0aA0DdBF06210B38615D"
-    );
+    this._contract = new Contract(IPFSContractAbi, this.contractAddress);
   }
 
   public link(parentContext: Web3Context) {
@@ -22,7 +22,10 @@ export class IpfsPlugin extends Web3PluginBase {
     this._contract.link(parentContext);
   }
 
-  public async uploadFile(filePath: string): Promise<void> {
+  public async uploadFile(
+    filePath: string,
+    accountAddress: string
+  ): Promise<void> {
     try {
       const helia = await createHelia();
       const unixFs = unixfs(helia);
@@ -31,23 +34,26 @@ export class IpfsPlugin extends Web3PluginBase {
       const cid = await unixFs.addBytes(bytes);
 
       const tx = await this._contract.methods.store(cid.toString());
-      console.log(
-        await tx.send({ from: "0x303DCE3136490CBf862cb3aBAdeE37018Bc6206c" })
-      );
-    } catch (error: any) {
-      console.log(error);
-      console.log("======================================");
-      console.log(error.request.params);
+      console.log(await tx.send({ from: accountAddress }));
+    } catch (error) {
+      throw error;
     }
   }
 
-  public async getEvents(): Promise<void> {
+  public async getEvents(accountAddress: string): Promise<string[]> {
     try {
-      const events = await this._contract.events.CIDStored();
+      const events = await this._contract.getPastEvents("CIDStored", {
+        filter: { owner: accountAddress },
+        fromBlock: 4880025,
+      });
 
-      console.log(events);
+      const cids: string[] = events.map((event: any) => {
+        return event.returnValues.cid;
+      });
+
+      return cids;
     } catch (error) {
-      console.log(error);
+      throw error;
     }
   }
 

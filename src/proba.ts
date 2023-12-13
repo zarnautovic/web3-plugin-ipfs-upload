@@ -1,19 +1,14 @@
 import { Web3 } from "web3";
 import { IpfsPlugin } from "../lib/index.js";
 
-// import { IPFSContractAbi } from "../lib/ContractAbi.js";
-
 const web3: Web3 = new Web3(
-  new Web3.providers.HttpProvider("https://1rpc.io/sepolia")
+  new Web3.providers.WebsocketProvider("wss://ethereum-sepolia.publicnode.com")
 );
 
-web3.eth.accounts.wallet
-  .add("0x2f579a3d3f74f27c1667687ba090586bc717a6afb45700ccb96dab3e8143a3bf")
-  .get(0)!;
-// const privateKey =
-//   "2f579a3d3f74f27c1667687ba090586bc717a6afb45700ccb96dab3e8143a3bf";
+const privateKey: string =
+  "0x2f579a3d3f74f27c1667687ba090586bc717a6afb45700ccb96dab3e8143a3bf";
 
-// const contractAddress = "0xA683BF985BC560c5dc99e8F33f3340d1e53736EB";
+const account = web3.eth.accounts.wallet.add(privateKey).get(0)!;
 
 web3.registerPlugin(new IpfsPlugin());
 
@@ -21,9 +16,10 @@ web3.registerPlugin(new IpfsPlugin());
 // eslint-disable-next-line @typescript-eslint/no-floating-promises
 (async () => {
   try {
-    // await getAllEvents();
+    const events = await getAllEvents();
+    console.log(events);
 
-    await uploadFile();
+    // await uploadFile();
   } catch (e) {
     console.log(e);
   }
@@ -31,13 +27,12 @@ web3.registerPlugin(new IpfsPlugin());
 
 setTimeout(() => {
   process.exit(0);
-}, 20000);
+}, 50000);
 
-async function uploadFile(): Promise<void> {
-  const cid = await web3.ipfs.uploadFile("./README.md");
-  console.log(cid);
-}
-
-// async function getAllEvents(): Promise<void> {
-//   await web3.ipfs.getEvents();
+// async function uploadFile(): Promise<void> {
+//   await web3.ipfs.uploadFile("./README.md", account.address);
 // }
+
+async function getAllEvents(): Promise<string[]> {
+  return await web3.ipfs.getEvents(account.address);
+}
