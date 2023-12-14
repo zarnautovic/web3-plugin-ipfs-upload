@@ -1,4 +1,3 @@
-import * as fs from "fs";
 import {
   Contract,
   EventLog,
@@ -9,6 +8,7 @@ import {
 import { IPFSContractAbi } from "./ipfs_contract_abi";
 import { createHelia } from "helia";
 import { unixfs } from "@helia/unixfs";
+import { Utils } from "./utils";
 
 export class IpfsPlugin extends Web3PluginBase {
   public pluginNamespace = "ipfs";
@@ -75,7 +75,7 @@ export class IpfsPlugin extends Web3PluginBase {
     let bytes: Uint8Array = new Uint8Array();
 
     if (typeof file === "string") {
-      bytes = this.readFileAsBytes(file);
+      bytes = Utils.readFile(file);
     } else {
       bytes = file;
     }
@@ -84,33 +84,14 @@ export class IpfsPlugin extends Web3PluginBase {
     return cid.toString();
   }
 
-  private readFileAsBytes(filePath: string): Uint8Array {
-    const __dirname = this.getDirName();
-    const file = fs.readFileSync(
-      String(`${__dirname}/../${filePath}`),
-      "utf-8"
-    );
-    const bytes = new TextEncoder().encode(file);
-    return bytes;
-  }
-
-  private getDirName(): string {
-    const dirUrl = new URL(".", import.meta.url);
-    return dirUrl.pathname;
-  }
-
   private checkValidAddress(address: string): void {
     if (!validator.isAddress(address)) {
       throw new Error(`Address is not a valid address: ${address}`);
     }
   }
 
-  private isServer(): boolean {
-    return !(typeof window != "undefined" && window.document);
-  }
-
   private checkFileInput(file: string | Uint8Array): void {
-    if (typeof file === "string" && !this.isServer()) {
+    if (typeof file === "string" && !Utils.isServer()) {
       throw new Error("File input must be a Unit8Array on browser");
     }
   }
