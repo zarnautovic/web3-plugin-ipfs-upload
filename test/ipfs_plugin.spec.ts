@@ -48,6 +48,7 @@ describe("IPFS plugin Tests", () => {
   describe("IPFS plugin upload file test", () => {
     let web3: Web3;
     let account: Web3BaseWalletAccount;
+    let file: string | Uint8Array;
 
     beforeAll(() => {
       web3 = new Web3(
@@ -58,13 +59,16 @@ describe("IPFS plugin Tests", () => {
       account = web3.eth.accounts.wallet.add(privateKey).get(0)!;
 
       web3.registerPlugin(new IpfsPlugin());
+
+      if (!(typeof window != "undefined" && window.document)) {
+        file = "test/test-file.txt";
+      } else {
+        file = new Uint8Array([1, 2, 3, 4]);
+      }
     });
 
     it("should call IPFS plugin upload file method with user address", async () => {
-      const receiptStatus = await web3.ipfs.uploadFile(
-        "test/test-file.txt",
-        account.address
-      );
+      const receiptStatus = await web3.ipfs.uploadFile(file, account.address);
       expect(receiptStatus).toEqual(true);
     }, 100000);
 

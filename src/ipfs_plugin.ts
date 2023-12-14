@@ -1,5 +1,4 @@
 import * as fs from "fs";
-import path from "path";
 import {
   Contract,
   EventLog,
@@ -10,7 +9,6 @@ import {
 import { IPFSContractAbi } from "./ipfs_contract_abi";
 import { createHelia } from "helia";
 import { unixfs } from "@helia/unixfs";
-import { fileURLToPath } from "url";
 
 export class IpfsPlugin extends Web3PluginBase {
   public pluginNamespace = "ipfs";
@@ -31,13 +29,15 @@ export class IpfsPlugin extends Web3PluginBase {
   }
 
   public async uploadFile(
-    filePath: string,
+    file: string | Uint8Array,
     accountAddress: string
   ): Promise<boolean> {
     try {
       this.checkValidAddress(accountAddress);
 
-      const cid = await this.uploadToIpfs(filePath);
+      this.checkFileInput(file);
+
+      const cid = await this.uploadToIpfs(file);
       const tx = await this._contract.methods.store(cid);
 
       const receipt = await tx.send({ from: accountAddress });
@@ -69,8 +69,23 @@ export class IpfsPlugin extends Web3PluginBase {
     }
   }
 
+  private async uploadToIpfs(file: string | Uint8Array): Promise<string> {
+    const helia = await createHelia();
+    const unixFs = unixfs(helia);
+    let bytes: Uint8Array = new Uint8Array();
+
+    if (typeof file === "string") {
+      bytes = this.readFileAsBytes(file);
+    } else {
+      bytes = file;
+    }
+
+    const cid = await unixFs.addBytes(bytes);
+    return cid.toString();
+  }
+
   private readFileAsBytes(filePath: string): Uint8Array {
-    const __dirname = this.getDirName(import.meta.url);
+    const __dirname = this.getDirName();
     const file = fs.readFileSync(
       String(`${__dirname}/../${filePath}`),
       "utf-8"
@@ -79,23 +94,24 @@ export class IpfsPlugin extends Web3PluginBase {
     return bytes;
   }
 
-  private async uploadToIpfs(filePath: string): Promise<string> {
-    const helia = await createHelia();
-    const unixFs = unixfs(helia);
-
-    const bytes = this.readFileAsBytes(filePath);
-    const cid = await unixFs.addBytes(bytes);
-    return cid.toString();
-  }
-
-  private getDirName(moduleUrl: string): string {
-    const filename = fileURLToPath(moduleUrl);
-    return path.dirname(filename);
+  private getDirName(): string {
+    const dirUrl = new URL(".", import.meta.url);
+    return dirUrl.pathname;
   }
 
   private checkValidAddress(address: string): void {
     if (!validator.isAddress(address)) {
       throw new Error(`Address is not a valid address: ${address}`);
+    }
+  }
+
+  private isServer(): boolean {
+    return !(typeof window != "undefined" && window.document);
+  }
+
+  private checkFileInput(file: string | Uint8Array): void {
+    if (typeof file === "string" && !this.isServer()) {
+      throw new Error("File input must be a Unit8Array on browser");
     }
   }
 }
