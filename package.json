@@ -13,7 +13,6 @@
     "lint": "eslint '{src,test}/**/*.ts'",
     "build": "tsc --build",
     "clean": "rimraf lib && rimraf dist",
-    "test": "NODE_OPTIONS=--experimental-vm-modules jest --config=./test/jest.config.json --forceExit",
     "test-e2e-node": "vitest --config=./test/config/vitest-node.config.ts",
     "test-e2e-chrome": "vitest --config=./test/config/vitest-chrome.config.ts",
     "test-e2e-firefox": "vitest --config=./test/config/vitest-firefox.config.ts",
