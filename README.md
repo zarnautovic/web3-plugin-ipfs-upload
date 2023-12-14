@@ -17,8 +17,8 @@ How to use
 ```bash
 const web3 = new Web3(provider_url);
 web3.registerPlugin(new IpfsPlugin());
-web3.ipfs.uploadFile(path_to_file, from_address)
-web.ipfs.getEvents(from_address)
+await web3.ipfs.uploadFile(path_to_file, from_address)
+await web.ipfs.getEvents(from_address)
 ```
 
 Tests
