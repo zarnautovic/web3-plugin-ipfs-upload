@@ -17,7 +17,19 @@ How to use
 ```bash
 const web3 = new Web3(provider_url);
 web3.registerPlugin(new IpfsPlugin());
-await web3.ipfs.uploadFile(path_to_file, from_address)
+```
+
+node
+
+```bash
+await web3.ipfs.uploadFile(path_to_file, from_address) or await web3.ipfs.uploadFile(unit8Array, from_address)
+await web.ipfs.getEvents(from_address)
+```
+
+browser
+
+```bash
+await web3.ipfs.uploadFile(unit8Array, from_address)
 await web.ipfs.getEvents(from_address)
 ```
 
