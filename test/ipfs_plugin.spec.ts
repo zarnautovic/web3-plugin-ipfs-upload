@@ -1,10 +1,8 @@
 import { EventLog, Web3, Web3BaseWalletAccount, core } from "web3";
-import { jest } from "@jest/globals";
 import { IpfsPlugin } from "../src/ipfs_plugin";
+import { expect, describe, it, beforeAll } from "vitest";
 
 describe("IPFS plugin Tests", () => {
-  jest.setTimeout(60000);
-
   const privateKey: string =
     "0x2f579a3d3f74f27c1667687ba090586bc717a6afb45700ccb96dab3e8143a3bf";
 
@@ -68,7 +66,7 @@ describe("IPFS plugin Tests", () => {
         account.address
       );
       expect(receiptStatus).toEqual(BigInt(1));
-    });
+    }, 100000);
 
     it("should throw error if user address is not valid", async () => {
       const invalidAddress = "0x123";
