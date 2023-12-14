@@ -65,7 +65,7 @@ describe("IPFS plugin Tests", () => {
         "test/test-file.txt",
         account.address
       );
-      expect(receiptStatus).toEqual(BigInt(1));
+      expect(receiptStatus).toEqual(true);
     }, 100000);
 
     it("should throw error if user address is not valid", async () => {

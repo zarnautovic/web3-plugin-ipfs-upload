@@ -33,7 +33,7 @@ export class IpfsPlugin extends Web3PluginBase {
   public async uploadFile(
     filePath: string,
     accountAddress: string
-  ): Promise<BigInt> {
+  ): Promise<boolean> {
     try {
       this.checkValidAddress(accountAddress);
 
@@ -46,7 +46,7 @@ export class IpfsPlugin extends Web3PluginBase {
         throw new Error("Transaction failed");
       }
 
-      return receipt.status;
+      return true;
     } catch (error) {
       throw error;
     }
